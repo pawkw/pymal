@@ -28,16 +28,56 @@ def read_str(in_str: str) -> MalType:
 
 
 def read_form(reader: Reader) -> MalType:
-    if reader.peek() is None:
+    peek = reader.peek()
+    if peek is None:
         raise MalError("unbalanced")
-    if reader.peek() == "(":
+    if peek == "(":
         return MalType.list(read_list(reader, ")"))
-    if reader.peek() == "[":
+    if peek == "[":
         return MalType.vector(read_list(reader, "]"))
-    if reader.peek() == "{":
+    if peek == "{":
         return MalType.hashmap(read_list(reader, "}"))
     
     # Do quote, unquote, etc. here.
+    if peek == "'":
+        reader.next()
+        return MalType.list([
+            MalType.symbol('quote'),
+            read_form(reader)])
+    
+    if peek == "`":
+        reader.next()
+        return MalType.list([
+            MalType.symbol('quasiquote'),
+            read_form(reader)])
+
+    if peek == "~":
+        reader.next()
+        return MalType.list([
+            MalType.symbol('unquote'),
+            read_form(reader)])
+
+    if peek == "@":
+        reader.next()
+        return MalType.list([
+            MalType.symbol('deref'),
+            read_form(reader)])
+
+    if peek == "^":
+        reader.next()
+        exp_a = read_form(reader)
+        reader.next()
+        exp_b = read_form(reader)
+        return MalType.list([
+            MalType.symbol('with-meta'),
+            exp_b,
+            exp_a])
+
+    if peek == "~@":
+        reader.next()
+        return MalType.list([
+            MalType.symbol('splice-unquote'),
+            read_form(reader)])
 
     return read_atom(reader)
 
