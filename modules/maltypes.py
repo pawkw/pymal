@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 
 
 class MalType:
@@ -67,7 +67,7 @@ class MalType:
         return cls("function", contents)
 
     @classmethod
-    def builtin(cls, contents: "MalType") -> "MalType":
+    def builtin(cls, contents: Callable) -> "MalType":
         return cls("builtin", contents)
 
     @classmethod

@@ -99,6 +99,14 @@ def read_atom(reader: Reader):
     string = reader.peek()
     if string.isnumeric():
         return MalType.integer(int(string))
+
+    # Unary negative
+    if string[0] == '-' and len(string) > 1:
+        reader.current = string[1:]
+        return MalType.list([
+            MalType.symbol('neg'),
+            read_form(reader)
+        ])
     
     if string[0] == '"':
         if len(string) > 1 and string[-1] == '"':
@@ -118,7 +126,8 @@ def read_atom(reader: Reader):
         return MalType.false()
 
     if string[0] == ';':
-        return MalType.comment(string)
+        return MalType.nil()
+        # return MalType.comment(string)
 
     return MalType.symbol(string)
 
