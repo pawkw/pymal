@@ -1,7 +1,7 @@
 import re
 from modules.maltypes import MalType
 from typing import List
-
+from modules.malerror import MalError
 
 class Reader:
     pattern = re.compile(r"""[\s,]*(~@|[\[\]{}()'`~^@]|"(?:[\\].|[^\\"])*"?|;.*|[^\s\[\]{}()'"`@,;]+)""");
@@ -28,6 +28,8 @@ def read_str(in_str: str) -> MalType:
 
 
 def read_form(reader: Reader) -> MalType:
+    if reader.peek() is None:
+        raise MalError("unbalanced")
     if reader.peek() == "(":
         return MalType.list(read_list(reader, ")"))
     if reader.peek() == "[":
@@ -49,7 +51,7 @@ def read_list(reader: Reader, delim: str) -> List:
             break
         result.append(read_form(reader))
     if token != delim:
-        raise Exception(f"Expecting {delim}.")
+        raise MalError(f"unbalanced")
     return result
 
 
@@ -60,11 +62,11 @@ def read_atom(reader: Reader):
     
     if string[0] == '"':
         if len(string) > 1 and string[-1] == '"':
-            return MalType.string(process_string(string[1:-1]))
-        raise Exception(f'Expected a " to close string {string}')
+            return MalType.string(process_string(string[1:]))
+        raise MalError("unbalanced")
 
     if string[0] == ':':
-        return MalType.hashkey(str(chr(255)) + string[1:])
+        return MalType.hashkey(string[1:])
 
     if string == 'true':
         return MalType.true()
@@ -82,4 +84,26 @@ def read_atom(reader: Reader):
 
 
 def process_string(string: str) -> str:
-    return string
+    result = ""
+    process = string
+    while process:
+        if process[0] == '\\':
+            if process[1] == '\\':
+                result += '\\'
+                process = process[2:]
+                continue
+            if process[1] == 'n':
+                result += '\n'
+                process = process[2:]
+                continue
+            if process[1] == '"':
+                result += '"'
+                process = process[2:]
+                continue
+        if process[0] == '"':
+            break
+        result += process[0]
+        process = process[1:]
+    if process != '"':
+        raise MalError("unbalanced")
+    return result

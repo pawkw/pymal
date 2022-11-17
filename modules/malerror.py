@@ -1,0 +1,2 @@
+class MalError(Exception):
+    pass
