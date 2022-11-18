@@ -1,6 +1,8 @@
 from modules.maltypes import MalType
 from functools import reduce
 from modules.printer import pr_str
+from modules.reader import read_str
+from modules.malerror import MalError
 
 # '+': MalType.function(lambda args: reduce(lambda x, y: MalType.integer(x.data + y.data), args), builtin=True),
 
@@ -71,6 +73,12 @@ builtins = {
     'not': MalType.builtin(
         lambda args: MalType.true() if args[0].type in ['nil', 'false'] else MalType.false()
     ),
+    'read-string': MalType.builtin(
+        lambda args: read_str(args[0].data)
+    ),
+    'slurp': MalType.builtin(
+        lambda args: slurp(args[0].data)
+    ),
     'def!': MalType.special('def!'),
     'let*': MalType.special('let*'),
     'prn-env': MalType.special('prn-env'),
@@ -127,3 +135,11 @@ def equate(args: MalType) -> MalType:
     
     # print("builtins::equate returning true")
     return MalType.true()
+
+
+def slurp(file_name: str) -> MalType:
+    try:
+        with open(file_name, 'r') as f:
+            return MalType.string(f.readlines())
+    except:
+        raise MalError(f"Could not open file '{file_name}'.")
