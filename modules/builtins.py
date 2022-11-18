@@ -26,23 +26,32 @@ builtins = {
     'prn': MalType.builtin(
         lambda args: prn(args)
     ),
+    'str': MalType.builtin(
+        lambda args: make_str(args)
+    ),
+    'pr-str': MalType.builtin(
+        lambda args: prstr(args)
+    ),
+    'println': MalType.builtin(
+        lambda args: println(args)
+    ),
     'list': MalType.builtin(
         lambda args: MalType.list(args)
     ),
     'list?': MalType.builtin(
-        lambda args: args[0].isType('list')
+        lambda args: MalType.true() if args[0].isType('list') else MalType.false()
     ),
     'vector?': MalType.builtin(
-        lambda args: args[0].isType('vector')
+        lambda args: MalType.true() if args[0].isType('vector') else MalType.false()
     ),
     'hashmap?': MalType.builtin(
-        lambda args: args[0].isType('hashmap')
+        lambda args: MalType.true() if args[0].isType('hashmap') else MalType.false()
     ),
     'empty?': MalType.builtin(
-        lambda args: args[0].isEmpty()
+        lambda args: MalType.true() if args[0].isEmpty() else MalType.false()
     ),
     'count': MalType.builtin(
-        lambda args: len(args[0])
+        lambda args: MalType.integer(len(args[0].data)) if args[0].type in ['list', 'vector', 'hashmap'] else MalType.integer(0)
     ),
     '=': MalType.builtin(
         lambda args: equate(args)
@@ -59,6 +68,9 @@ builtins = {
     '<=': MalType.builtin(
         lambda args: MalType.true() if args[0].data <= args[1].data else MalType.false()
     ),
+    'not': MalType.builtin(
+        lambda args: MalType.true() if args[0].type in ['nil', 'false'] else MalType.false()
+    ),
     'def!': MalType.special('def!'),
     'let*': MalType.special('let*'),
     'prn-env': MalType.special('prn-env'),
@@ -69,7 +81,29 @@ builtins = {
 
 
 def prn(args: MalType) -> MalType:
-    print(pr_str(args[0]))
+    result = prstr(args)
+    print(result.data)
+    return MalType.nil()
+
+
+def make_str(args: MalType) -> MalType:
+    result = []
+    for item in args:
+        result.append(pr_str(item, print_readably=False))
+    return MalType.string("".join(result))
+
+
+def prstr(args: MalType) -> MalType:
+    result = []
+    for item in args:
+        result.append(pr_str(item))
+    return MalType.string(" ".join(result))
+
+def println(args: MalType) -> MalType:
+    result = []
+    for item in args:
+        result.append(pr_str(item, print_readably=False))
+    print(" ".join(result))
     return MalType.nil()
 
 
@@ -77,17 +111,19 @@ def equate(args: MalType) -> MalType:
     x = args[0]
     y = args[1]
     
-    if x.type != y.type:
-        return MalType.false()
-    
-    if not x.isCollection():
-        return MalType.true() if args[0].data == args[1].data else MalType.false()
+    if not (x.isCollection() and y.isCollection()):
+        return MalType.true() if x.data == y.data else MalType.false()
 
-    if len(x) != len(y):
+    if len(x.data) != len(y.data):
         return MalType.false()
 
-    result = MalType.true()
-    # for loop
+    for index in range(len(x.data)):
+        # print(f"builtins::equate x.data = {x.data[index].data} y.data = {y.data[index].data}")
+        if x.data[index].isCollection() and y.data[index].isCollection():
+            if equate([x.data[index], y.data[index]]).isType('false'):
+                return MalType.false()
+        elif x.data[index].data != y.data[index].data:
+            return MalType.false()
     
-    return result
-
+    # print("builtins::equate returning true")
+    return MalType.true()
