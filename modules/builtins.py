@@ -22,4 +22,7 @@ builtins = {
     'neg': _mt.builtin(
         lambda arg: _mt.integer(-arg[0].data)
     ),
+    'def!': _mt.special('def!'),
+    'let*': _mt.special('let*'),
+    'prn-env': _mt.special('prn-env'),
 }
