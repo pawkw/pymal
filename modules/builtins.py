@@ -79,12 +79,25 @@ builtins = {
     'slurp': MalType.builtin(
         lambda args: slurp(args[0].data)
     ),
+    'atom': MalType.builtin(
+        lambda args: MalType.atom(args[0])
+    ),
+    'atom?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('atom') else MalType.false()
+    ),
+    'deref': MalType.builtin(
+        lambda args: args[0].data
+    ),
+    'reset!': MalType.builtin(
+        lambda args: reset(args[0], args[1])
+    ),
     'def!': MalType.special('def!'),
     'let*': MalType.special('let*'),
     'prn-env': MalType.special('prn-env'),
     'do': MalType.special('do'),
     'if': MalType.special('if'),
     'fn*': MalType.special('fn*'),
+    'swap!': MalType.special('swap!'),
 }
 
 
@@ -144,3 +157,9 @@ def slurp(file_name: str) -> MalType:
             return MalType.string(" ".join(result))
     except FileNotFoundError:
         raise MalError(f"Could not open file '{file_name}'.")
+
+def reset(atom: MalType, value: MalType) -> MalType:
+    if not atom.isType('atom'):
+        raise MalError('Can not reset a non-atom.')
+    atom.data = value
+    return atom.data

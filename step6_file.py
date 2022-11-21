@@ -88,6 +88,14 @@ def EVAL(ast: MalType, env: Env) -> MalType:
                 result.env = env
                 return result
 
+            if function == "swap!":
+                data = params[2:]
+                func = params[1]
+                atom = EVAL(params[0], env)
+                result = EVAL(MalType.list([func, atom.data, *data]), env)
+                env.find(params[0].data).set(params[0].data, MalType.atom(result))
+                return result
+
         params = eval_ast(MalType.list(params), env)
         
         ## User functions
@@ -154,6 +162,18 @@ if __name__ == "__main__":
         print("Line history will be saved in history.txt.")
 
     readline.set_history_length(100)
+
+    repl_env.set('*ARGV*', MalType.list([]))
+
+    if len(sys.argv) > 1:
+        EVAL(read_str('(load-file "'+sys.argv[1]+'")'), repl_env)
+
+    if len(sys.argv ) > 2:
+        result = []
+        for item in sys.argv[2:]:
+            result.append(read_str(item))
+        repl_env.set('*ARGV*', MalType.list(result))
+
     while True:
         try:
             in_str = input("user> ")

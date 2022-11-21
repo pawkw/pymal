@@ -6,6 +6,8 @@ def pr_str(ast: MalType, print_readably: bool = True) -> str:
     if not ast.isCollection() and not ast.isType('string'):
         if ast.isType('hashkey'):
             return ":" + ast.data
+        if ast.isType('atom'):
+            return "(atom "+pr_str(ast.data)+")"
         return str(ast.data)
     if ast.isType('string'):
         return process_string(ast.data, print_readably)
