@@ -140,6 +140,7 @@ def equate(args: MalType) -> MalType:
 def slurp(file_name: str) -> MalType:
     try:
         with open(file_name, 'r') as f:
-            return MalType.string(f.readlines())
-    except:
+            result = f.readlines()
+            return MalType.string(" ".join(result))
+    except FileNotFoundError:
         raise MalError(f"Could not open file '{file_name}'.")

@@ -1,1 +1,5 @@
-(def! double (fn* (x) (* x 2)))
+(def! double 
+    (fn* (x) ;; Comment
+        (* x 2)
+    )
+)

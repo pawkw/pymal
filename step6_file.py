@@ -13,7 +13,7 @@ def READ(in_str: str) -> str:
 
 
 def EVAL(ast: MalType, env: Env) -> MalType:
-    print(f"EVAL: {pr_str(ast)}")
+    # print(f"EVAL: {pr_str(ast)}")
     while True:
         if not ast.isCollection():
             return eval_ast(ast, env)
@@ -23,6 +23,9 @@ def EVAL(ast: MalType, env: Env) -> MalType:
 
         if ast.isType('hashmap') or ast.isType('vector'):
             return eval_ast(ast, env)
+
+        if ast.isType('comment'):
+            continue
 
         # Apply
         function = EVAL(ast.data[0], env)
@@ -141,7 +144,7 @@ if __name__ == "__main__":
     for func in builtins.items():
         repl_env.set(func[0], func[1])
     repl_env.set('eval', MalType.builtin(
-        lambda args: EVAL(args, repl_env)
+        lambda args: EVAL(args[0], repl_env)
     ))
     EVAL(read_str('(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))'), repl_env)
 

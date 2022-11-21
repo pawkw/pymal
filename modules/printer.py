@@ -10,18 +10,18 @@ def pr_str(ast: MalType, print_readably: bool = True) -> str:
     if ast.isType('string'):
         return process_string(ast.data, print_readably)
     if ast.isType('list'):
-        return "(" + " ".join(get_list(ast.data, print_readably)) + ")"
+        return "(" + get_list(ast.data, print_readably) + ")"
     if ast.isType('vector'):
-        return "[" + " ".join(get_list(ast.data, print_readably)) + "]"
+        return "[" + get_list(ast.data, print_readably) + "]"
     if ast.isType('hashmap'):
-        return "{" + " ".join(get_list(ast.data, print_readably)) + "}"
+        return "{" + get_list(ast.data, print_readably) + "}"
 
 
 def get_list(items: List, print_readably: bool) -> List:
     result = []
     for item in items:
         result.append(pr_str(item, print_readably))
-    return result
+    return " ".join(result)
 
 
 def process_string(string: str, print_readably: bool) -> str:

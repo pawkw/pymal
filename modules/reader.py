@@ -126,8 +126,8 @@ def read_atom(reader: Reader):
         return MalType.false()
 
     if string[0] == ';':
-        return MalType.nil()
-        # return MalType.comment(string)
+        reader.next()
+        return read_form(reader)
 
     return MalType.symbol(string)
 
