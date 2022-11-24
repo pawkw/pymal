@@ -17,6 +17,9 @@ class MalType:
     def isCollection(self) -> bool:
         return self.type in ["hashmap", "vector", "list"]
 
+    def isMacro(self) -> bool:
+        return self.type == 'macro'
+
     @classmethod
     def list(cls, contents: List) -> "MalType":
         return cls("list", contents)
@@ -73,6 +76,10 @@ class MalType:
     @classmethod
     def special(cls, contents: str) -> "MalType":
         return cls("special", contents)
+
+    @classmethod
+    def macro(cls, contents: Callable) -> "MalType":
+        return cls("macro", contents)
 
     @classmethod
     def atom(cls, contents: str) -> "MalType":

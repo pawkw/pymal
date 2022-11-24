@@ -101,6 +101,15 @@ builtins = {
     'concat': MalType.builtin(
         lambda args: concat(args)
     ),
+    'nth': MalType.builtin(
+        lambda args: nth(args)
+    ),
+    'first': MalType.builtin(
+        lambda args: MalType.nil() if args[0].isType('nil') or args[0].isEmpty() else args[0].data[0]
+    ),
+    'rest': MalType.builtin(
+        lambda args: MalType.list([]) if args[0].isType('nil') or len(args[0].data) < 2 else MalType.list(args[0].data[1:])
+    ),
     'def!': MalType.special('def!'),
     'let*': MalType.special('let*'),
     'prn-env': MalType.special('prn-env'),
@@ -113,7 +122,19 @@ builtins = {
     'unquote': MalType.special('unquote'),
     'splice-unquote': MalType.special('splice-unquote'),
     'quasiquoteexpand': MalType.special('quasiquoteexpand'),
+    'defmacro!': MalType.special('defmacro!'),
+    'macroexpand': MalType.special('macroexpand'),
 }
+
+
+def nth(args: List) -> MalType:
+    if args[0].type not in ['vector', 'list']:
+        raise MalError("nth only works with lists and vectors.")
+
+    index = args[1].data
+    if index > len(args[0].data):
+        raise MalError(f"Index {index} out of range.")
+    return args[0].data[index]
 
 
 def prn(args: List) -> MalType:
