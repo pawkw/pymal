@@ -1,3 +1,4 @@
+from typing import List
 from modules.maltypes import MalType
 from functools import reduce
 from modules.printer import pr_str
@@ -42,6 +43,9 @@ builtins = {
     ),
     'list?': MalType.builtin(
         lambda args: MalType.true() if args[0].isType('list') else MalType.false()
+    ),
+    'vec': MalType.builtin(
+        lambda args: MalType.vector(args[0].data)
     ),
     'vector?': MalType.builtin(
         lambda args: MalType.true() if args[0].isType('vector') else MalType.false()
@@ -91,6 +95,12 @@ builtins = {
     'reset!': MalType.builtin(
         lambda args: reset(args[0], args[1])
     ),
+    'cons': MalType.builtin(
+        lambda args: MalType.list([args[0]]+args[1].data)
+    ),
+    'concat': MalType.builtin(
+        lambda args: concat(args)
+    ),
     'def!': MalType.special('def!'),
     'let*': MalType.special('let*'),
     'prn-env': MalType.special('prn-env'),
@@ -98,29 +108,34 @@ builtins = {
     'if': MalType.special('if'),
     'fn*': MalType.special('fn*'),
     'swap!': MalType.special('swap!'),
+    'quote': MalType.special('quote'),
+    'quasiquote': MalType.special('quasiquote'),
+    'unquote': MalType.special('unquote'),
+    'splice-unquote': MalType.special('splice-unquote'),
+    'quasiquoteexpand': MalType.special('quasiquoteexpand'),
 }
 
 
-def prn(args: MalType) -> MalType:
+def prn(args: List) -> MalType:
     result = prstr(args)
     print(result.data)
     return MalType.nil()
 
 
-def make_str(args: MalType) -> MalType:
+def make_str(args: List) -> MalType:
     result = []
     for item in args:
         result.append(pr_str(item, print_readably=False))
     return MalType.string("".join(result))
 
 
-def prstr(args: MalType) -> MalType:
+def prstr(args: List) -> MalType:
     result = []
     for item in args:
         result.append(pr_str(item))
     return MalType.string(" ".join(result))
 
-def println(args: MalType) -> MalType:
+def println(args: List) -> MalType:
     result = []
     for item in args:
         result.append(pr_str(item, print_readably=False))
@@ -128,12 +143,12 @@ def println(args: MalType) -> MalType:
     return MalType.nil()
 
 
-def equate(args: MalType) -> MalType:
+def equate(args: List) -> MalType:
     x = args[0]
     y = args[1]
     
     if not (x.isCollection() and y.isCollection()):
-        return MalType.true() if x.data == y.data else MalType.false()
+        return MalType.true() if x.data == y.data and x.type == y.type else MalType.false()
 
     if len(x.data) != len(y.data):
         return MalType.false()
@@ -163,3 +178,10 @@ def reset(atom: MalType, value: MalType) -> MalType:
         raise MalError('Can not reset a non-atom.')
     atom.data = value
     return atom.data
+
+def concat(args: List) -> MalType:
+    result = []
+    for item in args:
+        result.extend(item.data)
+    return MalType.list(result)
+    
