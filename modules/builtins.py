@@ -124,6 +124,11 @@ builtins = {
     'quasiquoteexpand': MalType.special('quasiquoteexpand'),
     'defmacro!': MalType.special('defmacro!'),
     'macroexpand': MalType.special('macroexpand'),
+    'try*': MalType.special('try*'),
+    'catch*': MalType.special('catch*'),
+    'throw': MalType.special('throw'),
+    'map': MalType.special('map'),
+    'apply': MalType.special('apply'),
 }
 
 

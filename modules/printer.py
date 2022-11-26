@@ -8,6 +8,14 @@ def pr_str(ast: MalType, print_readably: bool = True) -> str:
             return ":" + ast.data
         if ast.isType('atom'):
             return "(atom "+pr_str(ast.data)+")"
+        if ast.isType('builtin'):
+            return "<Built in function>"
+        if ast.isType('special'):
+            return "<Built in function>"
+        if ast.isType('function'):
+            return "<User defined in function>"
+        if ast.isType('macro'):
+            return "<Macro function>"
         return str(ast.data)
     if ast.isType('string'):
         return process_string(ast.data, print_readably)

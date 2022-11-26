@@ -30,7 +30,7 @@ class Env:
         # print(f'Env::get {key.type} {key.data}')
         result = self.find(key.data)
         if result is None:
-            raise MalError(f"{key.data} not found.")
+            raise MalError(f"'{key.data}' not found")
         return result.data[key.data]
 
     def root(self) -> "Env":
