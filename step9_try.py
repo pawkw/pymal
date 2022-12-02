@@ -20,11 +20,11 @@ def EVAL(ast: MalType, env: Env) -> MalType:
         if not ast.isCollection():
             return eval_ast(ast, env)
 
-        if ast.isEmpty():
-            return ast
-
         if ast.isType('hashmap') or ast.isType('vector'):
             return eval_ast(ast, env)
+
+        if ast.isEmpty():
+            return ast
 
         if ast.isType('comment'):
             continue
@@ -50,8 +50,8 @@ def EVAL(ast: MalType, env: Env) -> MalType:
                     # print_env(newEnv)
                     return EVAL(params[2], newEnv)
 
-            if function == "throw":
-                raise MalError(params[0].data)
+            # if function == "throw":
+            #     raise MalError(params[0].data)
 
             if function == "def!":
                 env.set(params[0].data, EVAL(params[1], env))
@@ -133,21 +133,8 @@ def EVAL(ast: MalType, env: Env) -> MalType:
                 ast = quasiquote(params[0])
                 continue
 
-            if function == "map":
-                result = []
-                map_function = params[0]
-                items = EVAL(params[1], env)
-                for item in items.data:
-                    result.append(EVAL(MalType.list([map_function, item]), env))
-                return MalType.list(result)
-
-            if function == "apply":
-                function = EVAL(params[0], env)
-                params = eval_ast(MalType.list(params[1:]), env)
-                params = [*params.data[:-1], *params.data[-1].data]
-
         params = eval_ast(MalType.list(params), env)
-        
+
         ## User functions
         if function.isType('function'):
             ast = function.body
@@ -165,8 +152,19 @@ def eval_ast(ast: MalType, env: Env) -> MalType:
         return env.get(ast)
 
     if ast.isCollection():
-        result_type = ast.type
-        result = MalType(result_type, [])
+        if ast.isType('hashmap'):
+            return EVAL(MalType.list([
+                MalType.symbol('hash-map'),
+                *ast.data
+            ]), env)
+
+        if ast.isType('vector'):
+            return EVAL(MalType.list([
+                MalType.symbol('vector'),
+                *ast.data
+            ]), env)
+
+        result = MalType.list([])
         for item in ast.data:
             result.data.append(EVAL(item, env))
         return result
@@ -264,14 +262,14 @@ if __name__ == "__main__":
 
     repl_env.set('*ARGV*', MalType.list([]))
 
-    if len(sys.argv) > 1:
-        EVAL(read_str('(load-file "'+sys.argv[1]+'")'), repl_env)
-
     if len(sys.argv ) > 2:
         result = []
         for item in sys.argv[2:]:
             result.append(read_str(item))
         repl_env.set('*ARGV*', MalType.list(result))
+
+    if len(sys.argv) > 1:
+        EVAL(read_str('(load-file "'+sys.argv[1]+'")'), repl_env)
 
     while True:
         try:

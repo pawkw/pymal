@@ -110,6 +110,66 @@ builtins = {
     'rest': MalType.builtin(
         lambda args: MalType.list([]) if args[0].isType('nil') or len(args[0].data) < 2 else MalType.list(args[0].data[1:])
     ),
+    'nil?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('nil') else MalType.false()
+    ),
+    'true?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('true') else MalType.false()
+    ),
+    'false?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('false') else MalType.false()
+    ),
+    'symbol?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('symbol') else MalType.false()
+    ),
+    'keyword?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('hashkey') else MalType.false()
+    ),
+    'sequential?': MalType.builtin(
+        lambda args: MalType.true() if args[0].type in ['list', 'vector'] else MalType.false()
+    ),
+    'map?': MalType.builtin(
+        lambda args: MalType.true() if args[0].isType('hashmap') else MalType.false()
+    ),
+    'symbol': MalType.builtin(
+        lambda args: MalType.symbol(str(args[0].data))
+    ),
+    'keyword': MalType.builtin(
+        lambda args: MalType.hashkey(str(args[0].data))
+    ),
+    'vector': MalType.builtin(
+        lambda args: MalType.vector([*args])
+    ),
+    'hash-map': MalType.builtin(
+        lambda args: make_hashmap(args)
+    ),
+    'apply': MalType.builtin(
+        lambda args: mal_apply(args)
+    ),
+    'map': MalType.builtin(
+        lambda args: mal_map(args)
+    ),
+    'throw': MalType.builtin(
+        lambda args: throw(args)
+    ),
+    'assoc': MalType.builtin(
+        lambda args: assoc(args)
+    ),
+    'dissoc': MalType.builtin(
+        lambda args: dissoc(args)
+    ),
+    'get': MalType.builtin(
+        lambda args: get(args)
+    ),
+    'contains?': MalType.builtin(
+        lambda args: MalType.true() if '\u029E' + args[1].data in args[0].data else MalType.false()
+    ),
+    'keys': MalType.builtin(
+        lambda args: MalType.list([MalType.hashkey(x[1:]) for x in args[0].data.keys()])
+    ),
+    'vals': MalType.builtin(
+        lambda args: MalType.list([x for x in args[0].data.values()])
+    ),
     'def!': MalType.special('def!'),
     'let*': MalType.special('let*'),
     'prn-env': MalType.special('prn-env'),
@@ -126,10 +186,58 @@ builtins = {
     'macroexpand': MalType.special('macroexpand'),
     'try*': MalType.special('try*'),
     'catch*': MalType.special('catch*'),
-    'throw': MalType.special('throw'),
-    'map': MalType.special('map'),
-    'apply': MalType.special('apply'),
 }
+
+
+def get(args: List) -> MalType:
+    map_one = args[0]
+    key = '\u029E' + args[1].data
+    if key in map_one.data:
+        return map_one.data[key]
+    return MalType.nil()
+
+
+def dissoc(args: List) -> MalType:
+    map_one = args[0].data.copy()
+    keys = args[1:]
+    for raw_key in keys:
+        key = '\u029E' + raw_key.data
+        if key in map_one:
+            del map_one[key]
+    return MalType.hashmap(map_one)
+
+
+def assoc(args: List) -> MalType:
+    map_one = args[0].data.copy()
+    map_two = make_hashmap(args[1:])
+    map_one.update(map_two.data)
+    return MalType.hashmap(map_one)
+
+
+def throw(args: List) -> None:
+    raise MalError(pr_str(args[0]))
+
+
+def mal_map(args: List) -> MalType:
+    result = []
+    function = args[0]
+    if not args[1].type in ['list', 'vector']:
+        raise MalError(f"Can not map to type {args[1].type}.")
+
+    for item in args[1].data:
+        result.append(function.data([item]))
+    return MalType.list(result)
+
+
+def mal_apply(args: List) -> MalType:
+    function = args[0]
+    last = args[-1]
+    extras = [] if len(args) < 3 else args[1:-1]
+    if not last.type in ['list', 'vector']:
+        raise MalError(f"Can not apply to type {last.type}.")
+
+    params = extras + last.data
+    return function.data(params)
 
 
 def nth(args: List) -> MalType:
@@ -153,6 +261,19 @@ def make_str(args: List) -> MalType:
     for item in args:
         result.append(pr_str(item, print_readably=False))
     return MalType.string("".join(result))
+
+
+def make_hashmap(args: List) -> MalType:
+    keys = args[::2]
+    vals = args[1::2]
+    if len(keys) != len(vals):
+        raise MalError("Unbalanced")
+
+    result = {}
+    for raw_key, val in zip(keys, vals):
+        key = '\u029E' + raw_key.data
+        result[key] = val
+    return MalType.hashmap(result)
 
 
 def prstr(args: List) -> MalType:
